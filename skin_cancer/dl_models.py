@@ -26,7 +26,7 @@ class PretrainedModel(nn.Module):
             raise NotImplementedError
 
     def forward(self, x):
-        return self.model(x)
+        return self.model(x).squeeze()
 
 
 class RegressionModel(nn.Module):
@@ -38,7 +38,7 @@ class RegressionModel(nn.Module):
         )
 
     def forward(self, x):
-        return self.layer(x)
+        return self.layer(x).squeeze()
 
 
 class MLP(nn.Module):
@@ -53,4 +53,4 @@ class MLP(nn.Module):
         )
 
     def forward(self, x):
-        return self.model(x)
+        return self.model(x).squeeze()
