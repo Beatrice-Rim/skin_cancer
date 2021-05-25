@@ -11,14 +11,14 @@ class Model(pl.LightningModule):
         self.lr = lr
         self.criterion = criterion
 
-        self.train_acc = torchmetrics.Accuracy(threshold=0)
-        self.val_acc = torchmetrics.Accuracy(threshold=0)
+        self.train_acc = torchmetrics.Accuracy()
+        self.val_acc = torchmetrics.Accuracy()
 
-        self.train_spec = torchmetrics.Specificity(threshold=0)
-        self.val_spec = torchmetrics.Specificity(threshold=0)
+        self.train_spec = torchmetrics.Specificity()
+        self.val_spec = torchmetrics.Specificity()
 
-        self.train_sens = torchmetrics.Recall(threshold=0)
-        self.val_sens = torchmetrics.Recall(threshold=0)
+        self.train_sens = torchmetrics.Recall()
+        self.val_sens = torchmetrics.Recall()
 
         self.class_to_idx = class_to_idx
         self.idx_to_class = {v: k for k, v in class_to_idx.items()} if class_to_idx is not None else None
@@ -29,11 +29,12 @@ class Model(pl.LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = self.model(x)
+        pred = (logits > 0).long()
         loss = self.criterion(logits, y)
 
-        self.log('train/accuracy', self.train_acc(logits, y), on_step=True, on_epoch=True)
-        self.log('train/specificity', self.train_spec(logits, y), on_step=True, on_epoch=True)
-        self.log('train/sensitivity', self.train_sens(logits, y), on_step=True, on_epoch=True)
+        self.log('train/accuracy', self.train_acc(pred, y), on_step=True, on_epoch=True)
+        self.log('train/specificity', self.train_spec(pred, y), on_step=True, on_epoch=True)
+        self.log('train/sensitivity', self.train_sens(pred, y), on_step=True, on_epoch=True)
         self.log('train/loss', loss, on_step=True, on_epoch=True)
 
         return loss
@@ -44,9 +45,9 @@ class Model(pl.LightningModule):
         loss = self.criterion(logits, y)
         pred = (logits > 0).long()
 
-        self.log('valid/accuracy', self.valid_acc(logits, y), on_step=False, on_epoch=True)
-        self.log('valid/specificity', self.valid_spec(logits, y), on_step=False, on_epoch=True)
-        self.log('valid/sensitivity', self.valid_sens(logits, y), on_step=False, on_epoch=True)
+        self.log('valid/accuracy', self.valid_acc(pred, y), on_step=False, on_epoch=True)
+        self.log('valid/specificity', self.valid_spec(pred, y), on_step=False, on_epoch=True)
+        self.log('valid/sensitivity', self.valid_sens(pred, y), on_step=False, on_epoch=True)
         self.log('valid/loss', loss, on_step=False, on_epoch=True)
 
         if batch_idx == 0 and isinstance(self.logger, pl.loggers.WandbLogger):
@@ -66,9 +67,9 @@ class Model(pl.LightningModule):
         loss = self.criterion(logits, y)
         pred = (logits > 0).long()
 
-        self.log('test/accuracy', self.valid_acc(logits, y), on_step=False, on_epoch=True)
-        self.log('test/specificity', self.valid_spec(logits, y), on_step=False, on_epoch=True)
-        self.log('test/sensitivity', self.valid_sens(logits, y), on_step=False, on_epoch=True)
+        self.log('test/accuracy', self.valid_acc(pred, y), on_step=False, on_epoch=True)
+        self.log('test/specificity', self.valid_spec(pred, y), on_step=False, on_epoch=True)
+        self.log('test/sensitivity', self.valid_sens(pred, y), on_step=False, on_epoch=True)
         self.log('test/loss', loss, on_step=False, on_epoch=True)
 
         if batch_idx == 0 and isinstance(self.logger, pl.loggers.WandbLogger):
