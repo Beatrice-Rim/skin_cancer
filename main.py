@@ -2,6 +2,7 @@ import random
 import numpy as np
 import argparse
 import torch
+from torch import nn
 import wandb
 from torch.utils.data import random_split, DataLoader
 
@@ -52,7 +53,8 @@ def train(model_type, dataset_root, n_epochs, use_gpu, do_test=True, batch_size=
         logger=logger,
         callbacks=[model_checkpoint, early_stopping],
         gpus=int(use_gpu),
-        max_epochs=n_epochs)
+        max_epochs=n_epochs,
+        num_sanity_val_steps=0)
 
     if model_type == 'regression':
         model = skin_cancer.dl_models.RegressionModel(224*224*3, 1)
@@ -70,7 +72,7 @@ def train(model_type, dataset_root, n_epochs, use_gpu, do_test=True, batch_size=
                        DataLoader(val_ds, batch_size=batch_size, shuffle=False)
 
     module = skin_cancer.train.Model(
-        model, torch.binary_cross_entropy_with_logits, lr=1e-3, class_to_idx=ds.class_to_idx)
+        model, nn.BCEWithLogitsLoss(), lr=1e-3, class_to_idx=ds.class_to_idx)
 
     trainer.fit(module, train_dl, val_dl)
     experiment.finish()
